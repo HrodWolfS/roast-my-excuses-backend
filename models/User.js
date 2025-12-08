@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const { DAILY_FREE_LIMIT } = require("../config/constants");
+
 const UserSchema = new mongoose.Schema(
   {
     // --- 1. Authentification ---
@@ -31,7 +33,7 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
-      index: -1, // Indexé pour trier le leaderboard RAPIDEMENT
+      index: -1, // Indexé pour trier le leaderboard
     },
     level: {
       type: Number,
@@ -76,7 +78,7 @@ const UserSchema = new mongoose.Schema(
     },
     dailyTasksUsed: {
       type: Number,
-      default: 3,
+      default: 0,
       min: 0,
     },
     lastTaskResetDate: {
@@ -85,14 +87,28 @@ const UserSchema = new mongoose.Schema(
     },
     adCredits: {
       type: Number,
-      default: 1,
-      min: 1, // Crédits gagnés en regardant des pubs
+      default: 0,
+      min: 0, // Pas de crédits négatifs
     },
   },
   {
     timestamps: true, // Ajoute automatiquement createdAt et updatedAt
   }
 );
+
+// --- 5. LOGIQUE adCredit --- 
+
+UserSchema.methods.canCreateTask = function () {
+  // Si Premium => Illimité
+  if (this.subscriptionStatus === 'premium') return true;
+
+  // Si on a des Crédits Pubs en stock => Oui
+  if (this.adCredits > 0) return true;
+
+  // Sinon, on vérifie si on a dépassé le quota gratuit du jour
+  return this.dailyTasksUsed < DAILY_FREE_LIMIT;
+};
+
 
 // Export du modèle
 module.exports = mongoose.model("User", UserSchema);
