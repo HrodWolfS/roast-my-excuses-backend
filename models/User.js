@@ -26,7 +26,7 @@ const UserSchema = new mongoose.Schema(
       minlength: 32, // On s'assure qu'on stocke bien un hash bcrypt et pas un mdp en clair
     },
 
-    // --- 2. Progression & Gamification (Le cœur du PLG) ---
+    // --- 2. Progression & Gamification ---
     points: {
       type: Number,
       default: 0,
@@ -76,7 +76,7 @@ const UserSchema = new mongoose.Schema(
     },
     dailyTasksUsed: {
       type: Number,
-      default: 0,
+      default: 3,
       min: 0,
     },
     lastTaskResetDate: {
@@ -85,8 +85,8 @@ const UserSchema = new mongoose.Schema(
     },
     adCredits: {
       type: Number,
-      default: 0,
-      min: 0, // Crédits gagnés en regardant des pubs
+      default: 1,
+      min: 1, // Crédits gagnés en regardant des pubs
     },
   },
   {
