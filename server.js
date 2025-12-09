@@ -1,11 +1,12 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-require("dotenv").config();
 const authRoutes = require('./routes/authRoutes');
+const taskRoutes = require('./routes/taskRoutes');
 
 const app = express();
 
@@ -15,9 +16,9 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 app.use('/api/auth', authRoutes);
+app.use('/api/tasks', taskRoutes);
 
 // Routes (à ajouter)
-
 app.post("/register", (req, res) => {
   res.json({ message: "Roast My Excuses API" });
 });

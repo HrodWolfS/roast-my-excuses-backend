@@ -106,7 +106,7 @@ UserSchema.methods.canCreateTask = function () {
   if (this.adCredits > 0) return true;
 
   // Sinon, on vérifie si on a dépassé le quota gratuit du jour
-  return this.dailyTasksUsed < DAILY_FREE_LIMIT;
+  return this.dailyTasksUsed < DAILY_FREE_LIMIT ;
 };
 
 
