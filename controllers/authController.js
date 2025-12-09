@@ -2,6 +2,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
+
 // Generate friendCode (Format: "B4N1E7")
 const generateFriendCode = () => {
     const caracters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -12,12 +13,17 @@ const generateFriendCode = () => {
     return code;
 };
 
-// Register a new user
+///////////////////////////////////////////////////////
+//                                                   //
+//                REGISTER USER                      //
+//                                                   //
+///////////////////////////////////////////////////////
+
 exports.register = async (req, res) => {
     const { userName, email, password } = req.body;
 
     try {
-        // Check l'existance de l'email et la longueur du mot de passe
+        // Check l'existance des input et la longueur du mot de passe
         if (!userName || !email || !password) {
             return res.status(400).json({ message: `Email, mot de passe et nom d'utilisateur requis` });
         }
@@ -66,4 +72,68 @@ exports.register = async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'Erreur du serveur / Woaaaa il fait chaud frère !' });
     } 
+};
+
+///////////////////////////////////////////////////////
+//                                                   //
+//                   LOGIN USER                      //
+//                                                   //
+///////////////////////////////////////////////////////
+
+exports.login = async (req, res) => {
+
+    let { identifier, email, userName, password } = req.body;
+    identifier = identifier || email || userName;
+
+    try {
+        // Validation des champs
+        if (!identifier || !password) {
+            return res.status(400).json({ message: "Identifiant et mot de passe requis" });
+        }
+
+        // Vérifier si l'email ou le userName existe avec ($or) 
+        const user = await User.findOne({ 
+          $or: [
+            { email: identifier },
+            { userName: identifier }
+          ]   
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: `Identifiant ou mot de passe incorrect` });
+        }
+
+        // Vérifier le mot de passe
+        const isMatch = await bcrypt.compare(password, user.passwordHash);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Mot de passe incorrect' });
+        }
+
+        // Générer un token JWT
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+        res.status(200).json({
+            _id: user._id,
+            userName: user.userName,
+            email: user.email,
+            friendCode: user.friendCode,
+            token,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erreur du serveur / Woaaaa il fait chaud frère !' });
+    }
+};
+
+///////////////////////////////////////////////////////
+//                                                   //
+//  LOGIN USER (PROTECTED BY MIDDLEWARE => auth.js)  //
+//                                                   //
+///////////////////////////////////////////////////////
+
+exports.getMe = async (req, res) => {
+    res.status(200).json({
+        success: true,
+        user: req.user
+    });
 };
