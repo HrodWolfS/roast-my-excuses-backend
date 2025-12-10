@@ -6,7 +6,7 @@ const MOCK_ROAST = {
    actionPlan: [
      "Étape 1 : Arrête de chercher des excuses.",
      "Étape 2 : Concentre-toi sur ta tâche.",
-     "Étape 3 : Termine-la et savoure la victoire !"
+     "Étape 3 : Termine-la et savoure la victoire champion!"
    ]
 };
 
