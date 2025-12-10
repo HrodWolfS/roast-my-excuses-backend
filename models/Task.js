@@ -6,7 +6,7 @@ const TaskSchema = new mongoose.Schema(
     // --- 2. Relation (Clé étrangère) ---
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Utilisateur",
+      ref: "User",
       required: [true, "Une tâche doit appartenir à un utilisateur"],
       index: true, // Indexé pour récupérer rapidement "Mes Tâches"
     },
