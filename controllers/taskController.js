@@ -1,5 +1,4 @@
 const Task = require('../models/Task');
-const User = require('../models/User');
 const { DAILY_FREE_LIMIT } = require('../config/constants'); 
 
 const MOCK_ROAST = {

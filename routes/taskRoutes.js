@@ -4,6 +4,6 @@ const { createTask } = require('../controllers/taskController');
 const protect = require('../middleware/auth');
 
 // Route POST /api/tasks
-router.post('/', protect, createTask);
+router.post('/task', protect, createTask);
 
 module.exports = router;
