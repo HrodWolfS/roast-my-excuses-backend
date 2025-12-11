@@ -7,6 +7,7 @@ const { DAILY_FREE_LIMIT } = require('../config/constants');
 //     ROAST en dur pour remplacer le fetch API      //
 //                 (Phase de test)                   //
 ///////////////////////////////////////////////////////
+
 const MOCK_ROAST = {
    roast: "Oh là là, tu es vraiment doué pour trouver des excuses ! Si seulement tu mettais autant d'efforts à accomplir tes tâches qu'à les éviter, tu serais déjà PDG d'une entreprise !",
    actionPlan: [
@@ -16,10 +17,11 @@ const MOCK_ROAST = {
    ]
 };
 
+
 ///////////////////////////////////////////////////////
-//                                                   //
 //              Création de la tâche.                //
 //              Vérification du token                //
+//           Création en base de donnée              //
 ///////////////////////////////////////////////////////
 
 exports.createTask = async (req, res) => {
@@ -86,10 +88,11 @@ exports.createTask = async (req, res) => {
   }
 };
 
+
 ///////////////////////////////////////////////////////
-//                                                   //
-//       Avancement de la tâche & du streak          //
-//                                                   //
+//             Avancement de la tâche                //
+//   pending / in_progress / completed / abandoned   //
+//                Streak & Level Up                  //
 ///////////////////////////////////////////////////////
 
 exports.updateTaskStatus = async (req, res) => {
@@ -108,8 +111,10 @@ exports.updateTaskStatus = async (req, res) => {
     if (task.userId.toString() !== user._id.toString()) {
       return res.status(403).json({ message: "Accès refusé à cette tâche." });
     }
+    //////////////////////////////
+    // --- TASK (Démarrage) --- //
+    //////////////////////////////
 
-    // --- TASK (Démarrage) ---
     if (status === 'in_progress') {
       if (task.status !== 'pending') {
         return res.status(400).json({ message: "Tâche déjà commencée ou terminée" });
@@ -119,8 +124,10 @@ exports.updateTaskStatus = async (req, res) => {
       await task.save();
       return res.status(200).json({ success: true, data: task });
     }
+    //////////////////////////
+    // --- ABANDON TASK --- //
+    //////////////////////////
 
-    // --- ABANDON TASK ---
     if (status === 'abandoned') {
         if (task.status === 'completed') {
             return res.status(400).json({ message: "Trop tard, elle est déjà finie !" });
@@ -135,8 +142,10 @@ exports.updateTaskStatus = async (req, res) => {
             message: "Tâche abandonnée. Dommage, ce sera pour la prochaine fois !" 
         });
     }
+    ////////////////////////////
+    // ---  COMPLETE TASK --- //
+    ////////////////////////////
 
-    // ---  COMPLETE TASK ---
     if (status === 'completed') {
       if (task.status !== 'in_progress') {
         return res.status(400).json({ message: "Il faut démarrer la tâche avant de la finir." });
@@ -146,32 +155,40 @@ exports.updateTaskStatus = async (req, res) => {
       task.status = 'completed';
       task.completedAt = now;
 
-      // --- CALCUL DES POINTS ---
+
+      ///////////////////////////////
+      // --- CALCUL DES POINTS --- //
+      ///////////////////////////////
+
       let pointsEarned = 0; 
 
       // Calcul du temps réel passé (en secondes)
       const taskDuration = (now - new Date(task.startedAt)) / 1000;
-      
-      // ANTI-TRICHE / ANTI-SPAM : 
+
+      ///////////////////////////////
+      //  ANTI-TRICHE / ANTI-SPAM  //
+      ///////////////////////////////
+
       const MINIMUM_EFFORT_SECONDS = 300; // 5 minutes minimum
 
       if (taskDuration > MINIMUM_EFFORT_SECONDS) {
           pointsEarned = 10; // Points de base validés
 
-          // Bonus Streak (Uniquement si pas triché)
+          // Bonus Streak
           if (user.streak >= 7) pointsEarned += 10;
           if (user.streak >= 15) pointsEarned += 20;
           if (user.streak >= 30) pointsEarned += 50;
 
-          // Bonus Focus (Si temps respecté)
-          if (taskDuration <= task.timerDuration) {
-            pointsEarned += 5; 
-          }
       }
 
-      // Mise à jour Task & User
+      // Mise à jour Task
       task.pointsEarned = pointsEarned;
       await task.save();
+
+
+      //////////////////////////////
+      // --- LOGIQUE LEVEL UP --- //
+      //////////////////////////////
 
       user.points += pointsEarned;
 
@@ -182,14 +199,17 @@ exports.updateTaskStatus = async (req, res) => {
         pointsForNextLevel = Math.floor(100 * Math.pow(1.5, user.level));
       }
 
-      // League Update
+      // League Update (en fonction du level user)
       if (user.level >= 75) user.currentLeague = 'Diamond';
       else if (user.level >= 50) user.currentLeague = 'Gold';
       else if (user.level >= 25) user.currentLeague = 'Silver';
       else user.currentLeague = 'Bronze';
 
 
-      // --- LOGIQUE STREAK ---
+      ////////////////////////////
+      // --- LOGIQUE STREAK --- //
+      ////////////////////////////
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const yesterday = new Date(today);
