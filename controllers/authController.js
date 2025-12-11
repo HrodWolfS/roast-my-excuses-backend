@@ -100,13 +100,13 @@ exports.login = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(400).json({ message: `Identifiant ou mot de passe incorrect` });
+            return res.status(401).json({ message: `Identifiant ou mot de passe incorrect` });
         }
 
         // Vérifier le mot de passe
         const isMatch = await bcrypt.compare(password, user.passwordHash);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Mot de passe incorrect' });
+            return res.status(401).json({ message: 'Mot de passe incorrect' });
         }
 
         // Générer un token JWT
