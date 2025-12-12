@@ -1,5 +1,6 @@
-import OpenAI from "openai";
-import "dotenv/config";
+const OpenAI = require("openai");
+require("dotenv").config();
+
 
 const client = new OpenAI({
   apiKey: process.env.XAI_API_KEY,
@@ -7,12 +8,12 @@ const client = new OpenAI({
 });
 
 // Fonction reutilisable : fournit task + excuse
-export async function askGrok({ task, excuse, roasty = false }) {
+exports.askGrok = async function ({ task, excuse, roasty = false }) {
 
     const isRoasty = roasty === true;
 
   if (!task || !excuse) {
-    return "Sans tache et sans excuse, pas de roast.";
+    throw new Error("Sans tache et sans excuse, pas de roast.");
   }
 
   const userContent = 
@@ -20,6 +21,7 @@ export async function askGrok({ task, excuse, roasty = false }) {
   `tâche: ${task}\n` +
   `excuse: ${excuse}`;
 
+  try {
   const response = await client.chat.completions.create({
     model: "grok-4-1-fast-reasoning", // ou grok-4-latest
     messages: [
@@ -27,7 +29,7 @@ export async function askGrok({ task, excuse, roasty = false }) {
         role: "system",
         content: `Tu es Roasty. Tu es le roi du 'Trash Talk Technique'. Tu es un hybride entre un Expert Senior aigri (qui connaît tout le jargon) et un Rappeur en battle (qui cherche la punchline qui tue).
 
-TA MISSION UNIQUE : Humilier la procrastination par la pertinence technique.
+TA MISSION UNIQUE : Humilier la procrastination par la pertinence technique sans employer de mots ultra techniques que pas grand monde comprendrait.
 
 RÈGLES D'ENGAGEMENT ABSOLUES :
 
@@ -61,37 +63,22 @@ Structure attendue :
 {
  "roastContent": "Le texte du roast ici (Max 280 chars, punchy, technique).",
  "actionPlan": [
- "Étape 1 (XX min) : Instruction humiliante pour idiot",
- "Étape 2 (XX min) : Instruction humiliante pour idiot",
- "Étape 3 (XX min) : Instruction humiliante pour idiot"
+ "Instruction humiliante pour idiot",
+ "Instruction humiliante pour idiot",
+ "Instruction humiliante pour idiot",
  ],
  "timerDuration": XX
  Réponds par un seul objet JSON valide. Ne renvoie jamais plusieurs objets, ni du texte hors JSON.”
 En mode roasty : “roasty = true → ne renvoie que { roastContent }, pas d’actionPlan, pas de timerDuration.
 }`,
       },
-      { role: "user", content: userContent },
-    ],
-    temperature: 0.6,
-  });
-  return response.choices[0]?.message?.content;
-}
-
-// Runner de test simple
-async function main() {
-  const task = "Je dois regarder tout les matchs de la ligue 1 du week-end";
-  const excuse = "mais j'arrive pas à décrocher mon mode carrière avec l'OM sur fifa 19";
-
-  try {
-    const answerChallenge = await askGrok({ task, excuse, roasty: false });
-    console.log("Mode challenge :\n", answerChallenge);
-
-    const answerRoasty = await askGrok({ task, excuse, roasty: true });
-    console.log("Mode Roasty :\n", answerRoasty);
-
+        { role: "user", content: userContent },
+      ],
+      temperature: 0.6,
+    });
+    return response.choices[0]?.message?.content;
   } catch (error) {
-    console.error("Erreur Grok :", error?.response?.data ?? error);
+    console.error("Erreur lors de l'appel à Grok :", error);
+    throw error;
   }
-}
-
-main();
+};
