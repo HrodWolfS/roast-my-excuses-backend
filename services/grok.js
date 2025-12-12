@@ -1,16 +1,14 @@
 const OpenAI = require("openai");
 require("dotenv").config();
 
-
 const client = new OpenAI({
   apiKey: process.env.XAI_API_KEY,
   baseURL: "https://api.x.ai/v1",
 });
 
-// Fonction reutilisable : fournit task + excuse
+// Fonction principale pour interroger Grok
 exports.askGrok = async function ({ task, excuse, roasty = false }) {
-
-    const isRoasty = roasty === true;
+  const isRoasty = roasty === true;
 
   if (!task || !excuse) {
     throw new Error("Sans tache et sans excuse, pas de roast.");
@@ -71,7 +69,7 @@ Structure attendue :
  Réponds par un seul objet JSON valide. Ne renvoie jamais plusieurs objets, ni du texte hors JSON.”
 En mode roasty : “roasty = true → ne renvoie que { roastContent }, pas d’actionPlan, pas de timerDuration.
 }`,
-      },
+        },
         { role: "user", content: userContent },
       ],
       temperature: 0.6,
@@ -82,3 +80,30 @@ En mode roasty : “roasty = true → ne renvoie que { roastContent }, pas d’a
     throw error;
   }
 };
+
+///////////////////////////////////////////////////////
+//              Runner de test simple                //
+//     avant intégration avec la taskController      //
+//               (OLD / USELESS NOW)                 //
+///////////////////////////////////////////////////////
+
+/*
+// Runner de test simple
+async function main() {
+  const task = "Je dois regarder tout les matchs de la ligue 1 du week-end";
+  const excuse = "mais j'arrive pas à décrocher mon mode carrière avec l'OM sur fifa 19";
+
+  try {
+    const answerChallenge = await askGrok({ task, excuse, roasty: false });
+    console.log("Mode challenge :\n", answerChallenge);
+
+    const answerRoasty = await askGrok({ task, excuse, roasty: true });
+    console.log("Mode Roasty :\n", answerRoasty);
+
+  } catch (error) {
+    console.error("Erreur Grok :", error?.response?.data ?? error);
+  }
+}
+
+main();
+*/

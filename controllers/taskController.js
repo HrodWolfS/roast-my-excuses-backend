@@ -1,20 +1,23 @@
+const User = require('../models/User');
 const Task = require('../models/Task');
 const { DAILY_FREE_LIMIT } = require('../config/constants'); 
-
+const { askGrok } = require('../services/grok');
+require("dotenv").config();
 
 ///////////////////////////////////////////////////////
-//                   FAKE DATA                       //
+//            FALLBACK DATA (AKA Le Plan B)          //
 //     ROAST en dur pour remplacer le fetch API      //
-//                 (Phase de test)                   //
+//           (Dans le cas ou l'API est KO)           //
 ///////////////////////////////////////////////////////
 
-const MOCK_ROAST = {
-   roast: "Oh là là, tu es vraiment doué pour trouver des excuses ! Si seulement tu mettais autant d'efforts à accomplir tes tâches qu'à les éviter, tu serais déjà PDG d'une entreprise !",
+const FALLBACK_DATA = {
+   roastContent: "Je suis en pause café (ou ton wifi est cramé), mais t'as pas besoin de moi pour savoir que tu procrastines. Bouge-toi.",
    actionPlan: [
-     "Étape 1 : Arrête de chercher des excuses.",
-     "Étape 2 : Concentre-toi sur ta tâche.",
-     "Étape 3 : Termine-la et savoure la victoire champion!"
-   ]
+     "Étape 1 (1 min) : Arrête de chercher des excuses.",
+     "Étape 2 (2 min) : Ouvre ton outil de travail.",
+     "Étape 3 (20 min) : Fais le strict minimum, c'est mieux que rien."
+   ],
+   timerDuration: 1500 // 25 minutes
 };
 
 
@@ -27,8 +30,13 @@ const MOCK_ROAST = {
 exports.createTask = async (req, res) => {
   try {
     const { description, excuse, type } = req.body;
-    const user = req.user; 
+    
+    // 1. Récupération user
+    const user = await User.findById(req.user.id); 
 
+    if (!user) {
+        return res.status(404).json({ message: "Utilisateur introuvable en base." });
+    }
     // Validation des champs
     if (!description || !excuse || !type) {
       return res.status(400).json({ message: "Champs requis manquants (description, excuse, type)." });
@@ -41,7 +49,7 @@ exports.createTask = async (req, res) => {
         });
     }
 
-   // 3. Update compteurs (UNIQUEMENT si non-premium)
+   // 3. Update compteurs utilisateur
    if (user.subscriptionStatus !== 'premium') {
         if (user.dailyTasksUsed < DAILY_FREE_LIMIT) {
             user.dailyTasksUsed += 1;
@@ -51,8 +59,40 @@ exports.createTask = async (req, res) => {
         await user.save(); // Save les compteurs modif
     }
 
-    // 4. Mock IA (à remplacer par appel API réel plus tard)
-    const aiResponse = MOCK_ROAST;
+    const isRoastMode = type === 'roasty';
+
+    // 4. Appel à l'API Grok
+    let aiData;
+    console.log(`Appel Grok pour : "${description}"...`);
+
+    try {
+        
+        const rawGrokResponse = await askGrok({ 
+            task: description, 
+            excuse: excuse, 
+            roasty: isRoastMode 
+        });
+
+        // Parsing du JSON reçu
+        const cleanJson = rawGrokResponse.replace(/```json|```/g, '').trim();
+        aiData = JSON.parse(cleanJson);
+        
+        // Ajustement timer en secondes si besoin
+        if (aiData.timerDuration && aiData.timerDuration < 100) {
+             aiData.timerDuration = aiData.timerDuration * 60;
+        }
+
+    } catch (err) {
+        console.error(" GROK FAILURE : passage en mode FALLBACK :", err.message);
+        if (err.response) {
+            console.error("Détail :", err.response.data);
+        }
+        
+        aiData = {
+            ...FALLBACK_DATA,
+            timerDuration: FALLBACK_DATA.timerDuration
+        };
+    }
 
     // 5. Création en DB
     const task = await Task.create({
@@ -60,9 +100,9 @@ exports.createTask = async (req, res) => {
         description,
         excuse,
         type,
-        roastContent: aiResponse.roast,
-        actionPlan: aiResponse.actionPlan,
-        timerDuration: 1500, // 25 min par défaut
+        roastContent: aiData.roastContent,
+        actionPlan: aiData.actionPlan || [],
+        timerDuration: aiData.timerDuration || 1500, // 25 minutes par défaut
         status: 'pending'
     });
 
@@ -78,12 +118,7 @@ exports.createTask = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error); 
-
-    if (error.name === 'ValidationError') {
-        const messages = Object.values(error.errors).map(val => val.message);
-        return res.status(400).json({ message: messages.join(', Au secours !! Je suis enfermé dans une boite !') });
-    }
+    console.error("Controller Error :", error); 
     res.status(500).json({ message: "Erreur serveur" });
   }
 };
