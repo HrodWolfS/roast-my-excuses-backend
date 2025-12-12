@@ -51,7 +51,6 @@ const TaskSchema = new mongoose.Schema(
     },
     timerDuration: {
       type: Number,
-      default: 1500, // 25 minutes en secondes (Pomodoro standard)
       min: 300, // 5 min min
       max: 7200, // 2h max
     },

@@ -1,31 +1,31 @@
-import OpenAI from "openai";
-import "dotenv/config";
+const OpenAI = require("openai");
+require("dotenv").config();
 
 const client = new OpenAI({
   apiKey: process.env.XAI_API_KEY,
   baseURL: "https://api.x.ai/v1",
 });
 
-// Fonction reutilisable : fournit task + excuse
-export async function askGrok({ task, excuse, roasty = false }) {
-
-    const isRoasty = roasty === true;
+// Fonction principale pour interroger Grok
+exports.askGrok = async function ({ task, excuse, roasty = false }) {
+  const isRoasty = roasty === true;
 
   if (!task || !excuse) {
-    return "Sans tache et sans excuse, pas de roast.";
+    throw new Error("Sans tache et sans excuse, pas de roast.");
   }
 
-  const userContent = 
-  `roasty: ${isRoasty ? "true" : "false"}\n` +
-  `tâche: ${task}\n` +
-  `excuse: ${excuse}`;
+  const userContent =
+    `roasty: ${isRoasty ? "true" : "false"}\n` +
+    `tâche: ${task}\n` +
+    `excuse: ${excuse}`;
 
-  const response = await client.chat.completions.create({
-    model: "grok-4-1-fast-reasoning", // ou grok-4-latest
-    messages: [
-      {
-        role: "system",
-        content: `Tu es Roasty. Tu es le roi du 'Trash Talk Technique'. Tu es un hybride entre un Expert Senior aigri (qui connaît tout le jargon) et un Rappeur en battle (qui cherche la punchline qui tue).
+  try {
+    const response = await client.chat.completions.create({
+      model: "grok-4-1-fast-reasoning", // ou grok-4-latest
+      messages: [
+        {
+          role: "system",
+          content: `Tu es Roasty. Tu es le roi du 'Trash Talk Technique'. Tu es un hybride entre un Expert Senior aigri (qui connaît tout le jargon) et un Rappeur en battle (qui cherche la punchline qui tue).
 
 TA MISSION UNIQUE : Humilier la procrastination par la pertinence technique.
 
@@ -69,14 +69,25 @@ Structure attendue :
  Réponds par un seul objet JSON valide. Ne renvoie jamais plusieurs objets, ni du texte hors JSON.”
 En mode roasty : “roasty = true → ne renvoie que { roastContent }, pas d’actionPlan, pas de timerDuration.
 }`,
-      },
-      { role: "user", content: userContent },
-    ],
-    temperature: 0.6,
-  });
-  return response.choices[0]?.message?.content;
-}
+        },
+        { role: "user", content: userContent },
+      ],
+      temperature: 0.6,
+    });
+    return response.choices[0]?.message?.content;
+  } catch (error) {
+    console.error("Erreur lors de l'appel à Grok :", error);
+    throw error;
+  }
+};
 
+///////////////////////////////////////////////////////
+//              Runner de test simple                //
+//     avant intégration avec la taskController      //
+//               (OLD / USELESS NOW)                 //
+///////////////////////////////////////////////////////
+
+/*
 // Runner de test simple
 async function main() {
   const task = "Je dois regarder tout les matchs de la ligue 1 du week-end";
@@ -95,3 +106,4 @@ async function main() {
 }
 
 main();
+*/
