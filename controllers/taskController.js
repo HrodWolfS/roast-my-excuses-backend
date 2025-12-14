@@ -327,10 +327,11 @@ exports.updateTaskStatus = async (req, res) => {
   }
 };
 
-
-     //////////////////////////////////////////
-     // ------- LOGIQUE ACTIVE TASK -------- //
-     //////////////////////////////////////////
+///////////////////////////////////////////////////////
+//                                                   //
+//           RÉCUPÉRATION DES ACTIVE TASK            //
+//       Affiche les tâches eb cours / ou non        //
+///////////////////////////////////////////////////////
 
 exports.getActiveTask = async (req, res) => {
   try {
