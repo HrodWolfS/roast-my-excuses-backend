@@ -1,11 +1,16 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { createTask, updateTaskStatus } = require('../controllers/taskController');
-const protect = require('../middleware/auth');
+const {
+  createTask,
+  updateTaskStatus,
+  getActiveTask,
+} = require("../controllers/taskController");
+const protect = require("../middleware/auth");
 
 // Route POST /api/tasks
-router.post('/', protect, createTask);
+router.post("/", protect, createTask);
 // Route PATCH /api/tasks/:taskId/status
-router.patch('/:id/status', protect, updateTaskStatus);
-
+router.patch("/:id/status", protect, updateTaskStatus);
+// Route GET /api/tasks/active
+router.get("/active", protect, getActiveTask);
 module.exports = router;
