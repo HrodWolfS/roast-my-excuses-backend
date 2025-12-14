@@ -46,6 +46,27 @@ exports.createTask = async (req, res) => {
       });
     }
 
+     //////////////////////////////////////////
+     // ----- LOGIQUE RESET JOURNALIER ----- //
+     //////////////////////////////////////////
+
+    const now = new Date();
+    // Sécurité : si l'utilisateur est neuf (pas de date), on met une vieille date (0) pour forcer le reset (Date(0) renvoie au "1er Janvier 1970")
+    const lastReset = user.lastTaskResetDate ? new Date(user.lastTaskResetDate) : new Date(0);
+
+    // Comparaison stricte : jour/mois/année
+    const isDifferentDay =
+      now.getDate() !== lastReset.getDate() ||
+      now.getMonth() !== lastReset.getMonth() ||      
+      now.getFullYear() !== lastReset.getFullYear();
+      
+    if (isDifferentDay) {
+      console.log(`🔄 Réinitialisation quotidienne des compteurs pour ${user.username || 'User ' + user._id}.`);
+      user.dailyTasksUsed = 0;
+      user.lastTaskResetDate = now;
+      await user.save(); // On sauvegarde le reset immédiatement
+    }
+
     // 2. Vérif'
     if (!user.canCreateTask()) {
       return res.status(403).json({
@@ -147,9 +168,9 @@ exports.updateTaskStatus = async (req, res) => {
     if (task.userId.toString() !== user._id.toString()) {
       return res.status(403).json({ message: "Accès refusé à cette tâche." });
     }
-    //////////////////////////////
-    // --- TASK (Démarrage) --- //
-    //////////////////////////////
+     //////////////////////////////////////////
+     // --------- TASK (Démarrage) --------- //
+     //////////////////////////////////////////
 
     if (status === "in_progress") {
       if (task.status !== "pending") {
@@ -162,9 +183,10 @@ exports.updateTaskStatus = async (req, res) => {
       await task.save();
       return res.status(200).json({ success: true, data: task });
     }
-    //////////////////////////
-    // --- ABANDON TASK --- //
-    //////////////////////////
+
+     //////////////////////////////////////////
+     // ----------- ABANDON TASK ----------- //
+     //////////////////////////////////////////
 
     if (status === "abandoned") {
       if (task.status === "completed") {
@@ -182,9 +204,10 @@ exports.updateTaskStatus = async (req, res) => {
         message: "Tâche abandonnée. Dommage, ce sera pour la prochaine fois !",
       });
     }
-    ////////////////////////////
-    // ---  COMPLETE TASK --- //
-    ////////////////////////////
+    
+     //////////////////////////////////////////
+     // ---------- COMPLETE TASK ----------- //
+     //////////////////////////////////////////
 
     if (status === "completed") {
       if (task.status !== "in_progress") {
@@ -197,18 +220,20 @@ exports.updateTaskStatus = async (req, res) => {
       task.status = "completed";
       task.completedAt = now;
 
-      ///////////////////////////////
-      // --- CALCUL DES POINTS --- //
-      ///////////////////////////////
+
+     //////////////////////////////////////////
+     // -------- CALCUL DES POINTS --------- //
+     //////////////////////////////////////////
 
       let pointsEarned = 0;
 
       // Calcul du temps réel passé (en secondes)
       const taskDuration = (now - new Date(task.startedAt)) / 1000;
 
-      ///////////////////////////////
-      //  ANTI-TRICHE / ANTI-SPAM  //
-      ///////////////////////////////
+      
+     //////////////////////////////////////////
+     // ----- ANTI-TRICHE / ANTI-SPAM ------ //
+     //////////////////////////////////////////
 
       const MINIMUM_EFFORT_SECONDS = 300; // 5 minutes minimum
 
@@ -225,9 +250,9 @@ exports.updateTaskStatus = async (req, res) => {
       task.pointsEarned = pointsEarned;
       await task.save();
 
-      //////////////////////////////
-      // --- LOGIQUE LEVEL UP --- //
-      //////////////////////////////
+     //////////////////////////////////////////
+     // --------- LOGIQUE LEVEL UP --------- //
+     //////////////////////////////////////////
 
       user.points += pointsEarned;
 
@@ -244,9 +269,9 @@ exports.updateTaskStatus = async (req, res) => {
       else if (user.level >= 25) user.currentLeague = "Silver";
       else user.currentLeague = "Bronze";
 
-      ////////////////////////////
-      // --- LOGIQUE STREAK --- //
-      ////////////////////////////
+     //////////////////////////////////////////
+     // ---------- LOGIQUE STREAK ---------- //
+     //////////////////////////////////////////
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -302,9 +327,11 @@ exports.updateTaskStatus = async (req, res) => {
   }
 };
 
-/////////////////////////////////
-// --- LOGIQUE ACTIVE TASK --- //
-/////////////////////////////////
+
+     //////////////////////////////////////////
+     // ------- LOGIQUE ACTIVE TASK -------- //
+     //////////////////////////////////////////
+
 exports.getActiveTask = async (req, res) => {
   try {
     const activeTask = await Task.findOne({
