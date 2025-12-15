@@ -124,16 +124,3 @@ exports.login = async (req, res) => {
         res.status(500).json({ message: 'Erreur du serveur / Woaaaa il fait chaud frère !' });
     }
 };
-
-///////////////////////////////////////////////////////
-//                                                   //
-//  LOGIN USER (PROTECTED BY MIDDLEWARE => auth.js)  //
-//                                                   //
-///////////////////////////////////////////////////////
-
-exports.getMe = async (req, res) => {
-    res.status(200).json({
-        success: true,
-        user: req.user
-    });
-};

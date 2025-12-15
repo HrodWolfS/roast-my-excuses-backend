@@ -1,31 +1,30 @@
 require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+
+//Imports des routes
 const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const userRoutes = require("./routes/userRoutes");
+
 const app = express();
 
-// Middleware
+// Database connection
+connectDB();
+
+// Middleware 
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
+
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/users", userRoutes);
-
-// Routes (à ajouter)
-app.post("/register", (req, res) => {
-  res.json({ message: "Roast My Excuses API" });
-});
-
-// Database connection
-connectDB();
 
 // Start server
 const PORT = process.env.PORT || 3000;
