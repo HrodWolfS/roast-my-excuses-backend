@@ -4,6 +4,7 @@ const {
   createTask,
   updateTaskStatus,
   getActiveTask,
+  getMyTasks,
 } = require("../controllers/taskController");
 const { protect } = require("../middleware/auth");
 
@@ -13,4 +14,7 @@ router.post("/", protect, createTask);
 router.patch("/:id/status", protect, updateTaskStatus);
 // Route GET /api/tasks/active
 router.get("/active", protect, getActiveTask);
+// Route GET /api/tasks/ (My Tasks)
+router.get("/", protect, getMyTasks);
+
 module.exports = router;
