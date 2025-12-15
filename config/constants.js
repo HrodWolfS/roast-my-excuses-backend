@@ -1,5 +1,5 @@
-require('dotenv').config();
+require("dotenv").config();
 
 module.exports = {
-  DAILY_FREE_LIMIT: 3, 
+  DAILY_FREE_LIMIT: 3,
 };
