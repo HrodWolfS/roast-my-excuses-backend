@@ -264,16 +264,8 @@ exports.updateTaskStatus = async (req, res) => {
 
       let pointsEarned = 100;
 
-      // Calcul du temps réel passé (en secondes)
-      const taskDuration = (now - new Date(task.startedAt)) / 1000;
-
-      //////////////////////////////////////////
-      // ----- ANTI-TRICHE / ANTI-SPAM ------ //
-      //////////////////////////////////////////
-
-      // On garde une sécu pour éviter les requêtes API directes sans attendre
-      // Mais on baisse le seuil ou on vérifie par rapport à la durée prévue
-      // const MINIMUM_EFFORT_SECONDS = 60;
+      
+      //--- ANTI-TRICHE / ANTI-SPAM ---//
 
       // Bonus Streak
       if (user.streak >= 7) pointsEarned += 10;
@@ -339,9 +331,6 @@ exports.updateTaskStatus = async (req, res) => {
 
       await user.save();
 
-      // On prépare la réponse en ajoutant isLevelUp à l'objet de la tâche.
-      // C'est une "rustine" de sécurité : si le Redux Thunk ne renvoie que la partie "data"
-      // de la réponse, le front-end aura quand même accès à cette info cruciale.
       const responseTask = task.toObject();
       responseTask.isLevelUp = isLevelUp;
 
