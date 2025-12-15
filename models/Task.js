@@ -51,7 +51,7 @@ const TaskSchema = new mongoose.Schema(
     },
     timerDuration: {
       type: Number,
-      min: 300, // 5 min min
+      min: 10,
       max: 7200, // 2h max
     },
     // --- 6. Métrique & dates
