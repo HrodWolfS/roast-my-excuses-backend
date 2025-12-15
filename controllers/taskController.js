@@ -109,7 +109,7 @@ exports.createTask = async (req, res) => {
       aiData = JSON.parse(cleanJson);
 
       // Ajustement timer en secondes si besoin
-      if (aiData.timerDuration && aiData.timerDuration < 100) {
+      if (aiData.timerDuration && aiData.timerDuration < 30) {
         aiData.timerDuration = aiData.timerDuration * 60;
       }
     } catch (err) {
