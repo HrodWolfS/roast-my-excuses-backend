@@ -6,7 +6,7 @@ const {
   getActiveTask,
   getMyTasks,
 } = require("../controllers/taskController");
-const protect = require("../middleware/auth");
+const { protect } = require("../middleware/auth");
 
 // Route POST /api/tasks
 router.post("/", protect, createTask);
