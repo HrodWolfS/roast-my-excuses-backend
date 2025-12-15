@@ -385,3 +385,26 @@ exports.getActiveTask = async (req, res) => {
     return res.status(500).json({ message: "Erreur serveur" });
   }
 };
+
+///////////////////////////////////////////////////////
+//                                                   //
+//          RÉCUPÉRATION DE MES TÂCHES               //
+//             (Pour l'écran MyTasks)                //
+///////////////////////////////////////////////////////
+
+exports.getMyTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ userId: req.user._id }).sort({
+      createdAt: -1,
+    }); // Plus récentes en premier
+
+    return res.status(200).json({
+      success: true,
+      count: tasks.length,
+      data: tasks,
+    });
+  } catch (error) {
+    console.error("Erreur getMyTasks:", error);
+    return res.status(500).json({ message: "Erreur serveur" });
+  }
+};
