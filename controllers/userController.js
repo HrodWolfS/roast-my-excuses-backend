@@ -22,10 +22,10 @@ exports.getProfile = async (req, res) => {
         friendCode: user.friendCode,
 
         // Gamification Stats
-        points: user.points,
-        level: user.level,
-        streak: user.streak,
-        currentLeague: user.currentLeague,
+        points: user.points || 0,
+        level: user.level || 1,
+        streak: user.streak || 0,
+        currentLeague: user.currentLeague, //ajouter || + nom de la ligue croissante "Pro Flemmard"
 
         // Calculated fields
         tasksCompleted: tasksCompleted,
