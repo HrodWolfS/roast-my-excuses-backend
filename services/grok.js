@@ -14,18 +14,18 @@ exports.askGrok = async function ({ task, excuse, roasty = false }) {
     throw new Error("Sans tache et sans excuse, pas de roast.");
   }
 
-  const userContent = 
-  `roasty: ${isRoasty ? "true" : "false"}\n` +
-  `tâche: ${task}\n` +
-  `excuse: ${excuse}`;
+  const userContent =
+    `roasty: ${isRoasty ? "true" : "false"}\n` +
+    `tâche: ${task}\n` +
+    `excuse: ${excuse}`;
 
   try {
-  const response = await client.chat.completions.create({
-    model: "grok-4-1-fast-reasoning", // ou grok-4-latest
-    messages: [
-      {
-        role: "system",
-        content: `Tu es Roasty. Tu es le roi du 'Trash Talk Technique'. Tu es un hybride entre un Expert Senior aigri (qui connaît tout le jargon) et un Rappeur en battle (qui cherche la punchline qui tue).
+    const response = await client.chat.completions.create({
+      model: "grok-4-1-fast-reasoning", // ou grok-4-latest
+      messages: [
+        {
+          role: "system",
+          content: `Tu es Roasty. Tu es le roi du 'Trash Talk Technique'. Tu es un hybride entre un Expert Senior aigri (qui connaît tout le jargon) et un Rappeur en battle (qui cherche la punchline qui tue).
 
 TA MISSION UNIQUE : Humilier la procrastination par la pertinence technique sans employer de mots ultra techniques que pas grand monde comprendrait.
 
@@ -100,7 +100,7 @@ Structure attendue :
  "Instruction humiliante pour idiot",
  "Instruction humiliante pour idiot",
  ],
- "timerDuration": XX
+ "timerDuration": XX (DUREE EN SECONDES)
  Réponds par un seul objet JSON valide. Ne renvoie jamais plusieurs objets, ni du texte hors JSON.”
 En mode roasty : “roasty = true → ne renvoie que { roastContent }, pas d’actionPlan, pas de timerDuration.
 }`,
