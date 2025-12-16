@@ -9,4 +9,7 @@ router.get("/me", protect, userController.getProfile);
 // GET /api/user/leaderboard - Récupérer le classement global
 router.get("/leaderboard", protect, userController.getLeaderboard);
 
+// POST /api/user/addFriend - Ajouter un pote
+router.post("/addFriend", protect, userController.addFriend);
+
 module.exports = router;
