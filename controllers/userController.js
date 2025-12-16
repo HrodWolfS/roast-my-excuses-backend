@@ -101,7 +101,6 @@ exports.addFriend = async (req, res) => {
     }
 
     // L'Ajout Mutuel (Toi + Lui)
-    
     await User.findByIdAndUpdate(currentUserId, { 
       $addToSet: { friends: friend._id } 
     }); // $addToSet pour éviter les doublons

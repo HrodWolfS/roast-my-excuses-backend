@@ -10,6 +10,6 @@ router.get("/me", protect, userController.getProfile);
 router.get("/leaderboard", protect, userController.getLeaderboard);
 
 // POST /api/user/addFriend - Ajouter un pote
-router.post("/addFriend", protect, userController.addFriend);
+router.post("/friends", protect, userController.addFriend);
 
 module.exports = router;
