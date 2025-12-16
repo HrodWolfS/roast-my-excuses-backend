@@ -7,6 +7,8 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
+const feedRoutes = require("./routes/feedRoutes");
+
 
 const app = express();
 
@@ -17,6 +19,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/feed', feedRoutes);
 
 // Routes (à ajouter)
 app.post("/register", (req, res) => {
