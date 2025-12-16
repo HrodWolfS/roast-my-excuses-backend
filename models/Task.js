@@ -11,7 +11,7 @@ const TaskSchema = new mongoose.Schema(
       index: true, // Indexé pour récupérer rapidement "Mes Tâches"
     },
 
-    // --- 3. Contenu Utilisateur (Validation---
+    // --- 3. Contenu Utilisateur Validation---
     description: {
       type: String,
       required: [true, "La description est requise"],
