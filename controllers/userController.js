@@ -18,6 +18,9 @@ exports.getProfile = async (req, res) => {
       success: true,
       data: {
         _id: user._id,
+        userName: user.userName,
+        subscriptionStatus: user.subscriptionStatus,
+        isPublic: user.isPublic,
         email: user.email,
         friendCode: user.friendCode,
 
@@ -25,7 +28,7 @@ exports.getProfile = async (req, res) => {
         points: user.points || 0,
         level: user.level || 1,
         streak: user.streak || 0,
-        currentLeague: user.currentLeague, //ajouter || + nom de la ligue croissante "Pro Flemmard"
+        currentLeague: user.currentLeague || "Bronze", 
 
         // Calculated fields
         tasksCompleted: tasksCompleted,
