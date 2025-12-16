@@ -8,6 +8,7 @@ const morgan = require("morgan");
 //Imports des routes
 const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
+const feedRoutes = require("./routes/feedRoutes");
 const userRoutes = require("./routes/userRoutes");
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/api/feed", feedRoutes);
 app.use("/api/users", userRoutes);
 
 // Start server
