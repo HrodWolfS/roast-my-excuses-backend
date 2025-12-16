@@ -66,33 +66,4 @@ const toggleLike = async (req, res) => {
     }
 };
 
-const createRoast = async (req,res) => {
-    try {
-        const { userId, task, roast } = req.body;
-        if (!task || !roast) {
-            return res.status(400).json({ message: "Les champs task et roast sont requis" });
-        }
-        const doc = await Task.create({
-            userId: userId || undefined,
-            description: task,
-            excuse: roast,
-            roastContent: roast,
-            type: "roasty",
-            isPublic: true,
-        });
-
-        res.status(201).json({
-            id: doc._id.toString(),
-            user: doc.userId,
-            task: doc.description,
-            roast: doc.roastContent,
-            upvotes: doc.upvotes ?? 0,
-            isLiked: false,
-        });
-    } catch (error) {
-        console.error("Erreur createRoast :", error);
-        res.status(500).json({ message: "Erreur serveur" });
-    }
-};
-
-module.exports = { getFeed, createRoast, toggleLike };
+module.exports = { getFeed, toggleLike };

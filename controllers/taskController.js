@@ -230,10 +230,16 @@ exports.updateTaskStatus = async (req, res) => {
         await user.save();
       }
 
+      // On unifie la réponse pour qu'elle ressemble à celle de "completed"
       return res.status(200).json({
         success: true,
         data: task,
-        message: `Tâche abandonnée. Tu as quand même gratté ${consolationPoints} points de consolation.`,
+        gamification: {
+          pointsEarned: consolationPoints,
+          newTotalPoints: user.points,
+          isLevelUp: false, // Pas de level up en cas d'abandon
+          message: `Tâche abandonnée. Tu as quand même gratté ${consolationPoints} points de consolation.`,
+        }
       });
     }
 
@@ -258,16 +264,8 @@ exports.updateTaskStatus = async (req, res) => {
 
       let pointsEarned = 100;
 
-      // Calcul du temps réel passé (en secondes)
-      const taskDuration = (now - new Date(task.startedAt)) / 1000;
-
-      //////////////////////////////////////////
-      // ----- ANTI-TRICHE / ANTI-SPAM ------ //
-      //////////////////////////////////////////
-
-      // On garde une sécu pour éviter les requêtes API directes sans attendre
-      // Mais on baisse le seuil ou on vérifie par rapport à la durée prévue
-      // const MINIMUM_EFFORT_SECONDS = 60;
+      
+      //--- ANTI-TRICHE / ANTI-SPAM ---//
 
       // Bonus Streak
       if (user.streak >= 7) pointsEarned += 10;
@@ -282,6 +280,7 @@ exports.updateTaskStatus = async (req, res) => {
       // --------- LOGIQUE LEVEL UP --------- //
       //////////////////////////////////////////
 
+      const initialLevel = user.level;
       user.points += pointsEarned;
 
       // Level Up (Exponentielle 1.5)
@@ -291,6 +290,7 @@ exports.updateTaskStatus = async (req, res) => {
         pointsForNextLevel = Math.floor(100 * Math.pow(1.5, user.level));
       }
 
+      const isLevelUp = user.level > initialLevel;
       // League Update (en fonction du level user)
       if (user.level >= 75) user.currentLeague = "Diamond";
       else if (user.level >= 50) user.currentLeague = "Gold";
@@ -331,14 +331,18 @@ exports.updateTaskStatus = async (req, res) => {
 
       await user.save();
 
+      const responseTask = task.toObject();
+      responseTask.isLevelUp = isLevelUp;
+
       return res.json({
         success: true,
-        data: task,
+        data: responseTask,
         gamification: {
           pointsEarned: pointsEarned,
           newTotalPoints: user.points,
           newLevel: user.level,
           newLeague: user.currentLeague,
+          isLevelUp,
           streak: user.streak,
           message:
             pointsEarned === 0

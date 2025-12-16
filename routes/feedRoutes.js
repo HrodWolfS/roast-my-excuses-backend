@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getFeed, createRoast, toggleLike } = require("../controllers/feedControllers");
+const { getFeed, toggleLike } = require("../controllers/feedControllers");
 const protect = require("../middleware/auth");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -23,7 +23,6 @@ const optionalAuth = async (req, res, next) => {
 };
 
 router.get("/", optionalAuth, getFeed);
-router.post("/", createRoast);
 router.post("/:id/like", protect, toggleLike);
 
 module.exports = router;
