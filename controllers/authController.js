@@ -59,15 +59,29 @@ exports.register = async (req, res) => {
             email,
             passwordHash: hashPassword,
             friendCode,
+            points: 0,
+            level: 1,
+            currentLeague: "Bronze",
+            subscriptionStatus: "free"
         });
+
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
         res.status(201).json({
-            _id: user._id,
-            userName: user.userName,
-            email: user.email,
-            friendCode: user.friendCode,
+            success: true,
             token,
+            user: {
+                _id: user._id,
+                userName: user.userName,
+                email: user.email,
+                friendCode: user.friendCode,
+                points: 0,
+                level: 1,
+                currentLeague: "Bronze",
+                subscriptionStatus: "free"
+            },
         });
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erreur du serveur / Woaaaa il fait chaud frère !' });
@@ -113,12 +127,20 @@ exports.login = async (req, res) => {
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
         res.status(200).json({
-            _id: user._id,
-            userName: user.userName,
-            email: user.email,
-            friendCode: user.friendCode,
+            success: true,
             token,
+            user: {
+                _id: user._id,
+                userName: user.userName,
+                email: user.email,
+                friendCode: user.friendCode,
+                points: user.points || 0,
+                level: user.level || 1,
+                currentLeague: user.currentLeague || "Bronze",
+                subscriptionStatus: user.subscriptionStatus || "free"
+            }
         });
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erreur du serveur / Woaaaa il fait chaud frère !' });
