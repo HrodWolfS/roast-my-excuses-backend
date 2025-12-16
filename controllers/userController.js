@@ -1,5 +1,5 @@
-const Task = require("../models/Task"); //
-// Pas besoin d'importer User, car le middleware nous le donne déjà !
+const Task = require("../models/Task");
+const User = require("../models/User");
 
 exports.getProfile = async (req, res) => {
   try {
@@ -39,6 +39,29 @@ exports.getProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Erreur serveur lors de la récupération du profil",
+    });
+  }
+};
+
+// Récupérer le classement global
+exports.getLeaderboard = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+
+    const leaderboard = await User.find({})
+      .sort({ points: -1 })
+      .limit(limit)
+      .select("userName points level currentLeague streak");
+
+    res.status(200).json({
+      success: true,
+      data: leaderboard,
+    });
+  } catch (error) {
+    console.error("Error in getLeaderboard:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur leaderboard",
     });
   }
 };
