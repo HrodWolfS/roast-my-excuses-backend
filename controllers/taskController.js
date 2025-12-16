@@ -195,10 +195,14 @@ exports.updateTaskStatus = async (req, res) => {
     //////////////////////////////////////////
 
     if (status === "abandoned") {
-      if (task.status === "completed") {
+      // Prevent double abandonment or abandoning a completed task
+      if (task.status !== "in_progress") {
         return res
           .status(400)
-          .json({ message: "Trop tard, elle est déjà finie !" });
+          .json({
+            message:
+              "Cette tâche n'est pas en cours (déjà finie ou abandonnée).",
+          });
       }
 
       task.status = "abandoned";
@@ -239,7 +243,7 @@ exports.updateTaskStatus = async (req, res) => {
           newTotalPoints: user.points,
           isLevelUp: false, // Pas de level up en cas d'abandon
           message: `Tâche abandonnée. Tu as quand même gratté ${consolationPoints} points de consolation.`,
-        }
+        },
       });
     }
 
@@ -264,7 +268,6 @@ exports.updateTaskStatus = async (req, res) => {
 
       let pointsEarned = 100;
 
-      
       //--- ANTI-TRICHE / ANTI-SPAM ---//
 
       // Bonus Streak
