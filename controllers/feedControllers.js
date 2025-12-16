@@ -6,9 +6,15 @@ const getFeed = async (req, res) => {
         .sort({ upvotes: -1, createdAt: -1 })
             .limit(50)
             .select("description roastContent upvotes userId votedBy")
-            .populate('userId', 'pseudo email userName');
+            .populate({
+              path: 'userId',
+              select: 'pseudo email userName isPublic',
+            });
 
-        const formatted = tasks.map((t) => ({
+        const formatted = tasks
+          // ignore tasks from users who are not public
+          .filter((t) => t.userId?.isPublic !== false)
+          .map((t) => ({
             id: t._id.toString(),
             user: t.userId?.userName,
             task: t.description,
