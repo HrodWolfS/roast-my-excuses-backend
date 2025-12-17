@@ -11,34 +11,85 @@ const getFeed = async (req, res) => {
           .status(401)
           .json({ message: "Connecte-toi pour voir tes amis." });
       }
-      // On filtre sur les IDs des amis
+
+      // Sécurité : Si pas d'amis, on retourne vide direct (évite le fallback global)
+      if (!req.user.friends || req.user.friends.length === 0) {
+        return res.json([]);
+      }
+
       query.userId = { $in: req.user.friends };
     }
 
-    const tasks = await Task.find(query)
-      .sort({ upvotes: -1, createdAt: -1 })
-      .limit(50)
-      .select("description roastContent upvotes userId votedBy")
+    // 1. Récupérer le TOP ROAST (Le plus liké)
+    const topCandidates = await Task.find(query)
+      .sort({ upvotes: -1 })
+      .limit(10)
+      .select("description roastContent upvotes userId votedBy createdAt")
       .populate({
         path: "userId",
         select: "pseudo email userName isPublic",
       });
 
-    const formatted = tasks
-      // ignore tasks from users who are not public
-      .filter((t) => t.userId?.isPublic !== false)
-      .map((t) => ({
-        id: t._id.toString(),
-        user: t.userId?.userName,
-        task: t.description,
-        roast: t.roastContent,
-        upvotes: t.upvotes ?? 0,
-        isLiked: req.user
-          ? t.votedBy?.some((v) => v.toString() === req.user._id.toString())
-          : false,
-      }));
+    // 2. Récupérer le FEED CHRONOLOGIQUE (Les plus récents)
+    const recentCandidates = await Task.find(query)
+      .sort({ createdAt: -1 })
+      .limit(60)
+      .select("description roastContent upvotes userId votedBy createdAt")
+      .populate({
+        path: "userId",
+        select: "pseudo email userName isPublic",
+      });
 
-    res.json(formatted);
+    // Fonction de formatage
+    const formatTask = (t) => ({
+      id: t._id.toString(),
+      user: t.userId?.userName,
+      task: t.description,
+      roast: t.roastContent,
+      upvotes: t.upvotes ?? 0,
+      createdAt: t.createdAt, // Utile pour debug
+      isTop: false, // Flag par défaut
+      isLiked: req.user
+        ? t.votedBy?.some((v) => v.toString() === req.user._id.toString())
+        : false,
+    });
+
+    // Filtre de visibilité utilisateur (Global Privacy)
+    const isVisible = (t) => {
+      // console.log(`[FEED_DEBUG] Check user ${t.userId?._id}: Public=${t.userId?.isPublic}`);
+      return t.userId?.isPublic !== false;
+    };
+
+    // Sélection du Top Roast
+    const validTopCandidates = topCandidates.filter(isVisible);
+    const topRoast =
+      validTopCandidates.length > 0 ? validTopCandidates[0] : null;
+
+    // Sélection du Feed Récent (sans doublon avec le Top Roast)
+    let validRecentTasks = recentCandidates.filter(isVisible);
+
+    if (topRoast) {
+      validRecentTasks = validRecentTasks.filter(
+        (t) => t._id.toString() !== topRoast._id.toString()
+      );
+    }
+
+    // Assemblage final
+    let finalFeed = [];
+    if (topRoast) {
+      const formattedTop = formatTask(topRoast);
+      formattedTop.isTop = true; // On marque le top roast pour le frontend (optionnel)
+      finalFeed.push(formattedTop);
+    }
+
+    finalFeed = [...finalFeed, ...validRecentTasks.map(formatTask)];
+
+    // Limite finale (si on veut garder 50 items max par exemple)
+    if (finalFeed.length > 50) {
+      finalFeed = finalFeed.slice(0, 50);
+    }
+
+    res.json(finalFeed);
   } catch (error) {
     console.error("Erreur getFeed :", error);
     res.status(500).json({ message: "Erreur serveur" });
