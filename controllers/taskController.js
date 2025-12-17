@@ -148,7 +148,7 @@ exports.createTask = async (req, res) => {
     });
   } catch (error) {
     console.error("Controller Error :", error);
-    res.status(500).json({ message: "Erreur serveur" });
+    res.status(500).json({ message: error.message });
   }
 };
 
