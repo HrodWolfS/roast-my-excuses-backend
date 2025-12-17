@@ -69,6 +69,12 @@ const UserSchema = new mongoose.Schema(
       ],
       index: true, // Indexé pour les recherches d'amis instantanées
     },
+    friends: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
 
     // --- 4. Monétisation & Quotas ---
     subscriptionStatus: {
@@ -96,19 +102,18 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
-// --- 5. LOGIQUE adCredit --- 
+// --- 5. LOGIQUE adCredit ---
 
 UserSchema.methods.canCreateTask = function () {
   // Si Premium => Illimité
-  if (this.subscriptionStatus === 'premium') return true;
+  if (this.subscriptionStatus === "premium") return true;
 
   // Si on a des Crédits Pubs en stock => Oui
   if (this.adCredits > 0) return true;
 
   // Sinon, on vérifie si on a dépassé le quota gratuit du jour
-  return this.dailyTasksUsed < DAILY_FREE_LIMIT ;
+  return this.dailyTasksUsed < DAILY_FREE_LIMIT;
 };
-
 
 // Export du modèle
 module.exports = mongoose.model("User", UserSchema);
