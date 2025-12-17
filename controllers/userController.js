@@ -1,6 +1,35 @@
 const Task = require("../models/Task");
 const User = require("../models/User");
 
+// Update Profile
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { isPublic } = req.body;
+    console.log("UPDATE PROFILE - User:", req.user._id, "Payload:", req.body);
+    const user = await User.findById(req.user._id);
+
+    if (isPublic !== undefined) user.isPublic = isPublic;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        isPublic: user.isPublic,
+        message: "Profil mis à jour.",
+      },
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        error: `BACKEND_UPDATE_ERROR: ${error.message}`,
+      });
+  }
+};
+
 exports.getProfile = async (req, res) => {
   try {
     // 1. Récupération optimisée : Le user est DÉJÀ là grâce à ton middleware
@@ -101,11 +130,9 @@ exports.addFriend = async (req, res) => {
 
     // Vérif de sécu
     if (friend._id.equals(currentUserId)) {
-      return res
-        .status(400)
-        .json({
-          message: "Tu ne peux pas t'ajouter toi-même, narcissique va.",
-        });
+      return res.status(400).json({
+        message: "Tu ne peux pas t'ajouter toi-même, narcissique va.",
+      });
     }
 
     const currentUser = await User.findById(currentUserId);

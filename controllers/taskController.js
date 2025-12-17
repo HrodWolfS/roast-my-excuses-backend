@@ -21,11 +21,15 @@ const FALLBACK_DATA = {
   timerDuration: 1500, // 25 minutes
 };
 
-///////////////////////////////////////////////////////
-//              Création de la tâche.                //
-//              Vérification du token                //
-//           Création en base de donnée              //
-///////////////////////////////////////////////////////
+const SAFETY_FALLBACK_DATA = {
+  roastContent: "Ok, désolé mais là je peux pas t'aider. J'ai une éthique.",
+  actionPlan: [
+    "Étape 1 : Respire un coup.",
+    "Étape 2 : Change de sujet.",
+    "Étape 3 : Reviens avec un truc légal/safe.",
+  ],
+  timerDuration: 300, // 5 minutes (punition légère)
+};
 
 exports.createTask = async (req, res) => {
   try {
@@ -104,24 +108,41 @@ exports.createTask = async (req, res) => {
         roasty: isRoastMode,
       });
 
-      // Parsing du JSON reçu
-      const cleanJson = rawGrokResponse.replace(/```json|```/g, "").trim();
-      aiData = JSON.parse(cleanJson);
+      // Parsing robuste
+      let cleanJson = rawGrokResponse.replace(/```json|```/g, "").trim();
+
+      // Si Grok met du texte avant/après, on extrait juste le bloc JSON
+      const firstBrace = cleanJson.indexOf("{");
+      const lastBrace = cleanJson.lastIndexOf("}");
+
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+        aiData = JSON.parse(cleanJson);
+      } else {
+        throw new Error(
+          "Réponse Grok invalide (Pas de JSON détecté). Probable refus de sécurité."
+        );
+      }
 
       // Ajustement timer en secondes si besoin
       if (aiData.timerDuration && aiData.timerDuration < 30) {
         aiData.timerDuration = aiData.timerDuration * 60;
       }
     } catch (err) {
-      console.error(" GROK FAILURE : passage en mode FALLBACK :", err.message);
-      if (err.response) {
-        console.error("Détail :", err.response.data);
+      console.warn(
+        "⚠️ Grok n'a pas renvoyé de JSON valide (Refus ou Erreur). Passage en FALLBACK."
+      );
+      const isVIolation =
+        err.message.includes("refus") || err.message.includes("sécurité");
+
+      if (!isVIolation) {
+        console.error("Détail erreur Grok :", err.message);
       }
 
-      aiData = {
-        ...FALLBACK_DATA,
-        timerDuration: FALLBACK_DATA.timerDuration,
-      };
+      aiData = isVIolation ? { ...SAFETY_FALLBACK_DATA } : { ...FALLBACK_DATA };
+
+      // Ensure timerDuration exists
+      if (!aiData.timerDuration) aiData.timerDuration = 1500;
     }
 
     // 5. Création en DB
@@ -197,12 +218,9 @@ exports.updateTaskStatus = async (req, res) => {
     if (status === "abandoned") {
       // Prevent double abandonment or abandoning a completed task
       if (task.status !== "in_progress") {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Cette tâche n'est pas en cours (déjà finie ou abandonnée).",
-          });
+        return res.status(400).json({
+          message: "Cette tâche n'est pas en cours (déjà finie ou abandonnée).",
+        });
       }
 
       task.status = "abandoned";
@@ -408,6 +426,41 @@ exports.getMyTasks = async (req, res) => {
     });
   } catch (error) {
     console.error("Erreur getMyTasks:", error);
+    return res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+///////////////////////////////////////////////////////
+//                                                   //
+//          TOGGLE VISIBILITY (PUBLIC/PRIVATE)       //
+//                                                   //
+///////////////////////////////////////////////////////
+
+exports.toggleVisibility = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const task = await Task.findById(id);
+
+    if (!task) {
+      return res.status(404).json({ message: "Tâche introuvable" });
+    }
+
+    // Verify ownership
+    if (task.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Non autorisé" });
+    }
+
+    // Toggle
+    task.isPublic = !task.isPublic;
+    await task.save();
+
+    return res.json({
+      success: true,
+      isPublic: task.isPublic,
+      message: task.isPublic ? "Roast rendu public" : "Roast rendu privé",
+    });
+  } catch (error) {
+    console.error("Erreur toggleVisibility:", error);
     return res.status(500).json({ message: "Erreur serveur" });
   }
 };
