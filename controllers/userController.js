@@ -28,7 +28,7 @@ exports.getProfile = async (req, res) => {
         points: user.points || 0,
         level: user.level || 1,
         streak: user.streak || 0,
-        currentLeague: user.currentLeague || "Bronze", 
+        currentLeague: user.currentLeague || "Bronze",
 
         // Calculated fields
         tasksCompleted: tasksCompleted,
@@ -51,7 +51,17 @@ exports.getLeaderboard = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
 
-    const leaderboard = await User.find({})
+    const scope = req.query.scope; // 'global' or 'friends'
+
+    let query = {};
+    if (scope === "friends") {
+      // Pour le classement amis, on inclut les amis + soi-même
+      // req.user est dispo car la route est protégée
+      const friendIds = req.user.friends || [];
+      query = { _id: { $in: [...friendIds, req.user._id] } };
+    }
+
+    const leaderboard = await User.find(query)
       .sort({ points: -1 })
       .limit(limit)
       .select("userName points level currentLeague streak");
@@ -72,7 +82,7 @@ exports.getLeaderboard = async (req, res) => {
 // Ajouter un pote
 exports.addFriend = async (req, res) => {
   const { friendCode } = req.body;
-  const currentUserId = req.user._id; 
+  const currentUserId = req.user._id;
 
   try {
     // Validation basique
@@ -81,8 +91,8 @@ exports.addFriend = async (req, res) => {
     }
 
     // Trouver l'ami ciblé (Insensible à la casse)
-    const friend = await User.findOne({ 
-      friendCode: friendCode.toUpperCase() 
+    const friend = await User.findOne({
+      friendCode: friendCode.toUpperCase(),
     });
 
     if (!friend) {
@@ -91,7 +101,11 @@ exports.addFriend = async (req, res) => {
 
     // Vérif de sécu
     if (friend._id.equals(currentUserId)) {
-      return res.status(400).json({ message: "Tu ne peux pas t'ajouter toi-même, narcissique va." });
+      return res
+        .status(400)
+        .json({
+          message: "Tu ne peux pas t'ajouter toi-même, narcissique va.",
+        });
     }
 
     const currentUser = await User.findById(currentUserId);
@@ -101,12 +115,12 @@ exports.addFriend = async (req, res) => {
     }
 
     // L'Ajout Mutuel (Toi + Lui)
-    await User.findByIdAndUpdate(currentUserId, { 
-      $addToSet: { friends: friend._id } 
+    await User.findByIdAndUpdate(currentUserId, {
+      $addToSet: { friends: friend._id },
     }); // $addToSet pour éviter les doublons
-    
-    await User.findByIdAndUpdate(friend._id, { 
-      $addToSet: { friends: currentUserId } 
+
+    await User.findByIdAndUpdate(friend._id, {
+      $addToSet: { friends: currentUserId },
     });
 
     res.status(200).json({
@@ -116,12 +130,13 @@ exports.addFriend = async (req, res) => {
         _id: friend._id,
         userName: friend.userName,
         level: friend.level,
-        currentLeague: friend.currentLeague
-      }
+        currentLeague: friend.currentLeague,
+      },
     });
-
   } catch (error) {
     console.error("Erreur addFriend:", error);
-    res.status(500).json({ message: "Erreur serveur lors de l'ajout de l'ami." });
+    res
+      .status(500)
+      .json({ message: "Erreur serveur lors de l'ajout de l'ami." });
   }
 };
