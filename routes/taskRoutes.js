@@ -5,6 +5,7 @@ const {
   updateTaskStatus,
   getActiveTask,
   getMyTasks,
+  toggleVisibility,
 } = require("../controllers/taskController");
 const protect = require("../middleware/auth");
 
@@ -17,5 +18,8 @@ router.post("/", protect, createTask);
 router.patch("/:id/status", protect, updateTaskStatus);
 // Route GET /api/tasks/ (My Tasks)
 router.get("/", protect, getMyTasks);
+
+// Route PATCH /api/tasks/:id/visibility
+router.patch("/:id/visibility", protect, toggleVisibility);
 
 module.exports = router;
