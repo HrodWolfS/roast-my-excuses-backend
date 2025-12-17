@@ -358,7 +358,7 @@ exports.updateTaskStatus = async (req, res) => {
     return res.status(400).json({ message: "Statut invalide" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Erreur serveur" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -385,7 +385,7 @@ exports.getActiveTask = async (req, res) => {
     });
   } catch (error) {
     console.error("Erreur getActiveTask:", error);
-    return res.status(500).json({ message: "Erreur serveur" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -408,6 +408,6 @@ exports.getMyTasks = async (req, res) => {
     });
   } catch (error) {
     console.error("Erreur getMyTasks:", error);
-    return res.status(500).json({ message: "Erreur serveur" });
+    res.status(500).json({ message: error.message });
   }
 };
